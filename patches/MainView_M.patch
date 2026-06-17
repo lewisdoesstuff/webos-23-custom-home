@@ -1,8 +1,16 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..651c28f 100755
+index f5b4c15..e71f92e 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-@@ -63,7 +63,10 @@ FocusScope {
+@@ -19,6 +19,7 @@ import "Main"
+ import "EditMode"
+ import "../Containers/Sub"
+ import "../Containers/Main"
++import "config.js" as Config
+ 
+ FocusScope {
+ 
+@@ -63,7 +64,10 @@ FocusScope {
  
      signal goToTopPage()
  
@@ -14,7 +22,7 @@ index f5b4c15..651c28f 100755
      LayoutMirroring.childrenInherit: true
  
      onVisibleChanged: {
-@@ -72,6 +75,27 @@ FocusScope {
+@@ -72,6 +76,27 @@ FocusScope {
  
      focus: true
  
@@ -42,7 +50,7 @@ index f5b4c15..651c28f 100755
      Connections {
          target : systemProperties
  
-@@ -695,6 +719,250 @@ FocusScope {
+@@ -695,6 +720,250 @@ FocusScope {
              enabled: systemProperties.testOverlayLoader ? true : !uiController.showOverlayPopup
  
              sourceComponent: layoutRepeater.layoutTypeReady ? getLayoutComponent() : undefined
@@ -53,7 +61,7 @@ index f5b4c15..651c28f 100755
 +        Image {
 +            anchors.fill: parent
 +            fillMode: Image.PreserveAspectCrop
-+            source: "../../assets/background.png"
++            source: "file:///media/developer/apps/usr/palm/applications/ooo.lew.customhome/assets/background.png"
 +            z: 5
 +            visible: !uiController.isEditMode
 +        }
