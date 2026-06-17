@@ -57,6 +57,9 @@ Update the `background.jpg` image to change the background
 
 To get app IDs, long-press the select button on the app grid.
 
+To enable the AM/PM text on the clock:
+Edit [patches/MainView_M.patch](patches/MainView_M.patch:109) and set `visible: true`
+
 ## How it works
 
 `apply.sh` copies the TV's *own* original app, applies patches, overlays our custom files, then bind-mounts. Safe across reboots via webosbrew `init.d`.
