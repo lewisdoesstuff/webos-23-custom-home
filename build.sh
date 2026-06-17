@@ -2,7 +2,7 @@
 set -e; cd "$(dirname "$0")"
 [ -f .env ] && set -a && source .env && set +a
 rm -rf deploy
-mkdir -p deploy/patches deploy/UserInterfaceLayer/Containers deploy/assets
+mkdir -p deploy/patches deploy/UserInterfaceLayer/Containers deploy/assets/fonts deploy/assets/icons
 
 # Substitute HA placeholders in the MainView_M patch
 if [ -n "$HA_URL" ] && [ -f patches/MainView_M.patch ]; then

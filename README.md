@@ -60,3 +60,11 @@ To get app IDs, long-press the select button on the app grid.
 ## How it works
 
 `apply.sh` copies the TV's *own* original app, applies patches, overlays our custom files, then bind-mounts. Safe across reboots via webosbrew `init.d`.
+
+### Font Attribution
+Copyright (c) 2016-2023 The Inter Project Authors
+"Inter" is trademark of Rasmus Andersson.
+https://github.com/rsms/inter
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+See https://openfontlicense.org/ for full terms.

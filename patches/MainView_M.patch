@@ -1,5 +1,5 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..e71f92e 100755
+index f5b4c15..4e63131 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
 @@ -19,6 +19,7 @@ import "Main"
@@ -22,7 +22,7 @@ index f5b4c15..e71f92e 100755
      LayoutMirroring.childrenInherit: true
  
      onVisibleChanged: {
-@@ -72,6 +76,27 @@ FocusScope {
+@@ -72,6 +76,36 @@ FocusScope {
  
      focus: true
  
@@ -44,13 +44,22 @@ index f5b4c15..e71f92e 100755
 +        list.currentIndex = 0
 +    }
 +
-+    FontLoader { id: sfDisplay; source: "../../assets/fonts/SF-Pro-Display-Heavy.ttf" }
-+    FontLoader { id: sfBody; source: "../../assets/fonts/SF-Pro-Display-Medium.ttf" }
++    FontLoader { id: headerFontLoader; source: "../../assets/fonts/header.ttf" }
++    FontLoader { id: bodyFontLoader; source: "../../assets/fonts/body.ttf" }
++
++    function headerFont() {
++        return headerFontLoader.name || (styleSheet.fontManager
++            ? styleSheet.fontManager.smart_Bold.family : "")
++    }
++    function bodyFont() {
++        return bodyFontLoader.name || (styleSheet.fontManager
++            ? styleSheet.fontManager.smart_Regular.family : "")
++    }
 +
      Connections {
          target : systemProperties
  
-@@ -695,6 +720,250 @@ FocusScope {
+@@ -695,6 +729,250 @@ FocusScope {
              enabled: systemProperties.testOverlayLoader ? true : !uiController.showOverlayPopup
  
              sourceComponent: layoutRepeater.layoutTypeReady ? getLayoutComponent() : undefined
@@ -85,7 +94,7 @@ index f5b4c15..e71f92e 100755
 +                text: ("0" + hour12).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2)
 +                font.pixelSize: 96
 +                color: "#ffffff"
-+                font.family: sfDisplay.name
++                font.family: headerFont()
 +                font.weight: Font.Heavy
 +            }
 +
@@ -106,7 +115,7 @@ index f5b4c15..e71f92e 100755
 +                anchors.topMargin: 4
 +                text: Qt.formatDate(new Date(), "dddd, MMMM d")
 +                font.pixelSize: 24
-+                font.family: sfBody.name
++                font.family: bodyFont()
 +                font.weight: Font.Normal
 +                color: "#ffffff"
 +                opacity: 0.7
@@ -213,7 +222,7 @@ index f5b4c15..e71f92e 100755
 +                    font.pixelSize: 26
 +                    color: "#ffffff"
 +                    opacity: 0.9
-+                    font.family: sfDisplay.name
++                    font.family: headerFont()
 +                    font.weight: Font.Heavy
 +                    text: weatherWidget.temp
 +                }
@@ -239,7 +248,7 @@ index f5b4c15..e71f92e 100755
 +                            font.pixelSize: 16
 +                            color: "#ffffff"
 +                            opacity: 0.7
-+                            font.family: sfBody.name
++                            font.family: bodyFont()
 +                            font.weight: Font.Normal
 +                            text: weatherWidget.weekday(modelData.datetime)
 +                        }
@@ -253,7 +262,7 @@ index f5b4c15..e71f92e 100755
 +                            anchors.horizontalCenter: parent.horizontalCenter
 +                            font.pixelSize: 15
 +                            color: "#ffffff"
-+                            font.family: sfDisplay ? sfDisplay.name : ""
++                            font.family: headerFont()
 +                            font.weight: Font.Heavy
 +                            text: Math.round(modelData.temperature) + "\u00B0"
 +                        }
@@ -262,7 +271,7 @@ index f5b4c15..e71f92e 100755
 +                            font.pixelSize: 13
 +                            color: "#ffffff"
 +                            opacity: 0.4
-+                            font.family: sfBody.name
++                            font.family: bodyFont()
 +                            font.weight: Font.Normal
 +                            text: Math.round(modelData.templow) + "\u00B0"
 +                        }

@@ -7,7 +7,8 @@ FocusScope {
     id: root
 
     // ---- Font loaders ----
-    FontLoader { id: sfBody; source: "../../assets/fonts/SF-Pro-Display-Medium.ttf" }
+    FontLoader { id: bodyFontLoader; source: "../../assets/fonts/body.ttf" }
+    function bodyFont() { return bodyFontLoader.name || "" }
 
     property alias mainList: grid
 
@@ -179,7 +180,7 @@ FocusScope {
                 }
                 color: "#cdd6f4"
                 font.pixelSize: 14
-                font.family: sfBody.name
+                font.family: bodyFont()
                 font.weight: Font.Normal
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
