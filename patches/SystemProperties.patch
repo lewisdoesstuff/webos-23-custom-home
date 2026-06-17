@@ -1,0 +1,13 @@
+diff --git a/qml/AppInitializer/SystemProperties.qml b/qml/AppInitializer/SystemProperties.qml
+index 3a8f19b..d8be468 100755
+--- a/qml/AppInitializer/SystemProperties.qml
++++ b/qml/AppInitializer/SystemProperties.qml
+@@ -149,7 +149,7 @@ Item {
+     property string screenMoveTo
+     property bool getConfigtNativeLayoutDone: false
+     property string backgroundImageId: ""
+-    property bool noConfigForHome: false
++    property bool noConfigForHome: true
+     //
+ 
+     property bool isMultipleHome: true

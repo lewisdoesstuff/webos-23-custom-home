@@ -1,0 +1,295 @@
+diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
+index f5b4c15..bb32368 100755
+--- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
++++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
+@@ -63,7 +63,10 @@ FocusScope {
+ 
+     signal goToTopPage()
+ 
+-    LayoutMirroring.enabled: systemProperties.isRTLLocale
++    property var hiddenAppIds: Config.hiddenAppIds
++    property var displayNames: Config.displayNames
++    property var customIcons: Config.customIcons
++    property var iconTints: Config.iconTints
+     LayoutMirroring.childrenInherit: true
+ 
+     onVisibleChanged: {
+@@ -72,6 +75,27 @@ FocusScope {
+ 
+     focus: true
+ 
++    Keys.onPressed: {
++        if ((event.key === Qt.Key_Down || event.key === Qt.Key_Up ||
++             event.key === Qt.Key_Left || event.key === Qt.Key_Right) &&
++            !appListLoader.activeFocus) {
++            appListLoader.forceActiveFocus()
++            if (appListLoader.item && appListLoader.item.mainList) {
++                appListLoader.item.mainList.forceActiveFocus()
++                appListLoader.item.mainList.currentIndex = 0
++            }
++            event.accepted = true
++        }
++    }
++
++    function handleFirstFocus(list) {
++        list.forceActiveFocus()
++        list.currentIndex = 0
++    }
++
++    FontLoader { id: sfDisplay; source: "../../assets/fonts/SF-Pro-Display-Heavy.ttf" }
++    FontLoader { id: sfBody; source: "../../assets/fonts/SF-Pro-Display-Medium.ttf" }
++
+     Connections {
+         target : systemProperties
+ 
+@@ -695,6 +719,250 @@ FocusScope {
+             enabled: systemProperties.testOverlayLoader ? true : !uiController.showOverlayPopup
+ 
+             sourceComponent: layoutRepeater.layoutTypeReady ? getLayoutComponent() : undefined
++            active: false
++        }
++
++        // Custom content
++        Image {
++            anchors.fill: parent
++            fillMode: Image.PreserveAspectCrop
++            source: "../../assets/background.jpg"
++            z: 5
++            visible: !uiController.isEditMode
++        }
++
++        // Clock
++        Item {
++            id: clockArea
++            anchors.horizontalCenter: parent.horizontalCenter
++            y: parent.height * 0.05
++            width: 400
++            height: 120
++            z: 6
++
++            Text {
++                id: timeText
++                anchors.horizontalCenter: parent.horizontalCenter
++                anchors.top: parent.top
++                property var now: new Date()
++                property int hour24: now.getHours()
++                property int hour12: hour24 % 12 || 12
++                text: ("0" + hour12).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2)
++                font.pixelSize: 96
++                color: "#ffffff"
++                font.family: sfDisplay.name
++                font.weight: Font.Heavy
++            }
++
++            Text {
++                id: ampmText
++                anchors.left: timeText.right
++                anchors.leftMargin: 12
++                anchors.baseline: timeText.baseline
++                text: timeText.hour24 >= 12 ? "PM" : "AM"
++                font.pixelSize: 36
++                color: "#ffffff"
++                visible: false
++            }
++
++            Text {
++                anchors.horizontalCenter: parent.horizontalCenter
++                anchors.top: timeText.bottom
++                anchors.topMargin: 4
++                text: Qt.formatDate(new Date(), "dddd, MMMM d")
++                font.pixelSize: 24
++                font.family: sfBody.name
++                font.weight: Font.Normal
++                color: "#ffffff"
++                opacity: 0.7
++            }
++        }
++
++        // Weather from Home Assistant
++        Item {
++            id: weatherWidget
++            anchors.horizontalCenter: parent.horizontalCenter
++            anchors.top: clockArea.bottom
++            anchors.topMargin: 42
++            width: 700
++            height: 160
++            z: 6
++
++            property string haUrl: "${HA_URL}"
++            property string haToken: "${HA_TOKEN}"
++            property string weatherEntity: "${HA_ENTITY}"
++            property string temp: ""
++            property string condition: ""
++            property var forecast: []
++            property int forecastDays: 5
++            property var dayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
++
++            Timer {
++                interval: 300000
++                repeat: true
++                running: true
++                onTriggered: parent.fetchWeather()
++            }
++
++            function fetchWeather() {
++                var xhr = new XMLHttpRequest()
++                xhr.open("GET", weatherWidget.haUrl + "/api/states/" + weatherWidget.weatherEntity)
++                xhr.setRequestHeader("Authorization", "Bearer " + weatherWidget.haToken)
++                xhr.setRequestHeader("Content-Type", "application/json")
++                xhr.onreadystatechange = function() {
++                    if (xhr.readyState !== XMLHttpRequest.DONE || xhr.status !== 200) return
++                    var data = JSON.parse(xhr.responseText)
++                    weatherWidget.temp = Math.round(data.attributes.temperature) + "\u00B0"
++                    weatherWidget.condition = data.state
++                    weatherWidget.fetchForecast()
++                }
++                xhr.send()
++            }
++
++            function fetchForecast() {
++                var xhr = new XMLHttpRequest()
++                xhr.open("POST", weatherWidget.haUrl + "/api/services/weather/get_forecasts?return_response")
++                xhr.setRequestHeader("Authorization", "Bearer " + weatherWidget.haToken)
++                xhr.setRequestHeader("Content-Type", "application/json")
++                xhr.onreadystatechange = function() {
++                    if (xhr.readyState !== XMLHttpRequest.DONE || xhr.status !== 200) return
++                    var data = JSON.parse(xhr.responseText)
++                    var fcData = data.service_response || data
++                    if (fcData && fcData[weatherWidget.weatherEntity]) {
++                        var fc = fcData[weatherWidget.weatherEntity].forecast
++                        if (fc && fc.length > 0) {
++                            weatherWidget.forecast = fc.slice(0, weatherWidget.forecastDays)
++                        }
++                    }
++                }
++                xhr.send(JSON.stringify({
++                    entity_id: weatherWidget.weatherEntity,
++                    type: "daily"
++                }))
++            }
++
++            function iconFor(c) {
++                switch(c) {
++                    case "clear-night": return "\uD83C\uDF19";   // 🌙
++                    case "sunny": case "clear": return "\u2600\uFE0F";
++                    case "partlycloudy": return "\u26C5";
++                    case "cloudy": return "\u2601\uFE0F";
++                    case "rainy": return "\uD83C\uDF27";
++                    case "pouring": case "lightning-rainy": return "\u26C8\uFE0F";
++                    case "snowy": case "snowy-rainy": return "\u2744\uFE0F";
++                    case "fog": case "mist": return "\uD83C\uDF2B";
++                    case "windy": return "\uD83D\uDCA8";
++                    case "hail": return "\uD83C\uDF28";
++                    default: return "\u2600\uFE0F";
++                }
++            }
++
++            function weekday(dt) {
++                var d = new Date(dt)
++                return weatherWidget.dayNames[d.getDay()]
++            }
++
++            Component.onCompleted: fetchWeather()
++
++            // Current conditions
++            Row {
++                anchors.horizontalCenter: parent.horizontalCenter
++                spacing: 4
++
++                Text {
++                    font.pixelSize: 26
++                    color: "#ffffff"
++                    text: weatherWidget.iconFor(weatherWidget.condition)
++                }
++                Text {
++                    font.pixelSize: 26
++                    color: "#ffffff"
++                    opacity: 0.9
++                    font.family: sfDisplay.name
++                    font.weight: Font.Heavy
++                    text: weatherWidget.temp
++                }
++            }
++
++            // Multi-day forecast
++            Row {
++                anchors.horizontalCenter: parent.horizontalCenter
++                anchors.top: parent.top
++                anchors.topMargin: 48
++                spacing: 16
++
++                Repeater {
++                    model: weatherWidget.forecast
++
++                    Column {
++                        spacing: 4
++                        width: 80
++                        anchors.verticalCenter: parent.verticalCenter
++
++                        Text {
++                            anchors.horizontalCenter: parent.horizontalCenter
++                            font.pixelSize: 16
++                            color: "#ffffff"
++                            opacity: 0.7
++                            font.family: sfBody.name
++                            font.weight: Font.Normal
++                            text: weatherWidget.weekday(modelData.datetime)
++                        }
++                        Text {
++                            anchors.horizontalCenter: parent.horizontalCenter
++                            font.pixelSize: 22
++                            color: "#ffffff"
++                            text: weatherWidget.iconFor(modelData.condition)
++                        }
++                        Text {
++                            anchors.horizontalCenter: parent.horizontalCenter
++                            font.pixelSize: 15
++                            color: "#ffffff"
++                            font.family: sfDisplay ? sfDisplay.name : ""
++                            font.weight: Font.Heavy
++                            text: Math.round(modelData.temperature) + "\u00B0"
++                        }
++                        Text {
++                            anchors.horizontalCenter: parent.horizontalCenter
++                            font.pixelSize: 13
++                            color: "#ffffff"
++                            opacity: 0.4
++                            font.family: sfBody.name
++                            font.weight: Font.Normal
++                            text: Math.round(modelData.templow) + "\u00B0"
++                        }
++                    }
++                }
++            }
++        }
++
++        // App grid
++        Item {
++            width: parent.width
++            height: parent.height * 0.45
++            anchors.horizontalCenter: parent.horizontalCenter
++            y: parent.height * 0.52
++            z: 6
++
++            Loader {
++                id: appListLoader
++                objectName: "appListLoader"
++                anchors.fill: parent
++                source: "../Containers/CustomGrid.qml"
++
++                onLoaded: {
++                    item.hiddenAppIds = root.hiddenAppIds
++                    item.displayNames = root.displayNames
++                    item.customIcons = root.customIcons
++                    item.iconTints = root.iconTints
++                    item._interfaces = interfaces
++                    item.model = Qt.binding(function() {
++                        return interfaces.launchPoints.launchPointsModel
++                    })
++                    item.initialize()
++                    root.main = item
++                }
++            }
+         }
+     }
+ 

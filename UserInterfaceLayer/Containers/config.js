@@ -1,0 +1,46 @@
+.pragma library
+
+// App IDs to hide from the grid
+var hiddenAppIds = [
+    "com.webos.app.lgchannels",
+    "amazon.alexa.view",
+    "com.webos.app.homeconnect",
+    "com.webos.app.sportsteamsettings",
+    "com.webos.app.mediadiscovery",
+    "com.webos.app.camera",
+    "com.webos.app.lifeonscreen",
+    "com.pirate.refresh",
+    "org.webosbrew.custom-screensaver"
+]
+
+// Custom display names (app ID -> display name)
+var displayNames = {
+    "spotify-beehive": "Spotify",
+    "youtube.leanback.v4": "YouTube",
+}
+
+// Custom icons (app ID -> path relative to CustomGrid.qml)
+var customIcons = {
+    "spotify-beehive": "../../assets/icons/spotify.png",
+    "youtube.leanback.v4": "../../assets/icons/youtube.png",
+    "cdp-30": "../../assets/icons/plex.png",
+    "com.collegehumor.chdropout": "../../assets/icons/dropout.png",
+    "tv.twitch.tv.starshot.lg": "../../assets/icons/twitch.png",
+    "org.webosbrew.hbchannel": "../../assets/icons/homebrew.png",
+    "com.limelight.webos": "../../assets/icons/moonlight.png",
+    "com.webos.app.browser": "../../assets/icons/browser.png"
+}
+
+// Icon tint colors (app ID -> color)
+// Uses the Catppuccin Mocha palette: https://catppuccin.com/palette
+var iconTints = {
+    "com.webos.app.discovery": "#89b4fa",  // Blue
+    "spotify-beehive":         "#a6e3a1",  // Green
+    "youtube.leanback.v4":     "#f38ba8",  // Red
+    "cdp-30":                  "#f9e2af",  // Yellow
+    "com.collegehumor.chdropout": "#89b4fa",  // Blue
+    "tv.twitch.tv.starshot.lg":   "#cba6f7",  // Mauve
+    "org.webosbrew.hbchannel":    "#fab387",  // Peach
+    "com.limelight.webos":        "#74c7ec",  // Sapphire
+    "com.webos.app.browser":      "#89dceb",  // Sky
+}

@@ -1,0 +1,62 @@
+# Custom webOS 23 Home Screen
+
+Catppuccin-themed home screen with clock, weather, and custom app grid.
+
+> [!CAUTION]
+> **Vibe-Coded Software Ahead** 
+> 
+> This project is almost entirely AI generated. While it works on my TV, it may not work on yours.  
+> Although no permanent modifications will be made to the home app, please do know what you're doing before using this.
+
+> [!WARNING]
+> This project **ONLY** works on WebOS 23. WebOS 24 almost entirely changes the home app, rendering these changes incompatible.
+
+
+![Custom Home Screen](img/tv.jpg)
+
+## Features
+  - Minimal layout
+    - Removed ad shelves
+    - Removed input previews
+    - Removed search/notifications/settings shortcuts
+  - Clock and date
+  - Home Assistant provided weather and forecast
+  - Custom app grid
+  - Custom background image
+  - Hide apps
+  - Custom app icons
+  - Custom app colors
+  - Custom app names
+
+## Prerequisites
+  - A rooted LG TV running WebOS 23
+  - Homebrew Channel
+
+## Quick Start
+
+```bash
+cp .env.example .env          # edit with your HA URL + token
+./build.sh                    # generates deploy/
+scp -r deploy root@<your_tv_ip>:/media/developer/apps/usr/palm/applications/ooo.lew.customhome/
+ssh root@<your_tv_ip> "cd /media/developer/apps/usr/palm/applications/ooo.lew.customhome && ./apply.sh"
+# Ensure the home screen works, the below command will run the patches on startup
+ssh root@<your_tv_ip> "ln -sf /media/developer/apps/usr/palm/applications/ooo.lew.customhome/apply.sh /var/lib/webosbrew/init.d/49-custom-homescreen"
+```
+
+## Customization
+
+Edit `UserInterfaceLayer/Containers/config.js`:
+
+- `hiddenAppIds` — apps to hide from the grid
+- `displayNames` — rename apps  
+- `customIcons` — override app icons (PNG)
+- `iconTints` — per-app color overlay (Catppuccin palette)
+
+Place custom icons in `assets/icons/`.  
+Update the `background.jpg` image to change the background
+
+To get app IDs, long-press the select button on the app grid.
+
+## How it works
+
+`apply.sh` copies the TV's *own* original app, applies patches, overlays our custom files, then bind-mounts. Safe across reboots via webosbrew `init.d`.
