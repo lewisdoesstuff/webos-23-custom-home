@@ -1,5 +1,5 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..bb32368 100755
+index f5b4c15..651c28f 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
 @@ -63,7 +63,10 @@ FocusScope {
@@ -53,7 +53,7 @@ index f5b4c15..bb32368 100755
 +        Image {
 +            anchors.fill: parent
 +            fillMode: Image.PreserveAspectCrop
-+            source: "../../assets/background.jpg"
++            source: "../../assets/background.png"
 +            z: 5
 +            visible: !uiController.isEditMode
 +        }
