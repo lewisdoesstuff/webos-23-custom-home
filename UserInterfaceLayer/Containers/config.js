@@ -38,7 +38,7 @@ var iconTints = {
     "spotify-beehive":         "#a6e3a1",  // Green
     "youtube.leanback.v4":     "#f38ba8",  // Red
     "cdp-30":                  "#f9e2af",  // Yellow
-    "com.collegehumor.chdropout": "#89b4fa",  // Blue
+    "com.collegehumor.chdropout": "#f9e2af",  // Yellow
     "tv.twitch.tv.starshot.lg":   "#cba6f7",  // Mauve
     "org.webosbrew.hbchannel":    "#fab387",  // Peach
     "com.limelight.webos":        "#74c7ec",  // Sapphire
