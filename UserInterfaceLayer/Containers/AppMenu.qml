@@ -15,7 +15,7 @@ FocusScope {
     signal renameRequested()
     signal tintPicked(string tint)
     signal iconPicked(string path)
-    signal manageRequested()
+    signal settingsRequested()
     signal resetRequested()
     signal closed()
 
@@ -149,7 +149,7 @@ FocusScope {
                 }
             }
 
-            // 4: Manage all apps
+            // 4: Settings
             Rectangle {
                 width: parent.width; height: 52; radius: 10
                 color: menu.row === 4 ? "#313244" : "transparent"
@@ -157,7 +157,7 @@ FocusScope {
                 border.width: menu.row === 4 ? 2 : 0
                 Text {
                     anchors.centerIn: parent
-                    text: "Manage all apps"
+                    text: "Settings"
                     color: "#89b4fa"; font.family: menu.bodyFont(); font.pixelSize: 20
                 }
             }
@@ -258,7 +258,7 @@ FocusScope {
         switch (menu.row) {
         case 0: menu.hideToggle(); break
         case 1: menu.renameRequested(); break
-        case 4: menu.manageRequested(); break
+        case 4: menu.settingsRequested(); break
         case 5: menu.resetRequested(); break
         case 6: menu.closed(); break
         }

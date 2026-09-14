@@ -1,5 +1,5 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..94fe25c 100755
+index f5b4c15..ae482ea 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
 @@ -19,6 +19,7 @@ import "Main"
@@ -59,7 +59,7 @@ index f5b4c15..94fe25c 100755
      Connections {
          target : systemProperties
  
-@@ -695,6 +729,298 @@ FocusScope {
+@@ -695,6 +729,326 @@ FocusScope {
              enabled: systemProperties.testOverlayLoader ? true : !uiController.showOverlayPopup
  
              sourceComponent: layoutRepeater.layoutTypeReady ? getLayoutComponent() : undefined
@@ -80,7 +80,7 @@ index f5b4c15..94fe25c 100755
 +            id: constellation
 +            anchors.fill: parent
 +            z: 5
-+            visible: Config.constellationEnabled && !uiController.isEditMode
++            visible: appSettings.constellationEnabled && !uiController.isEditMode
 +
 +            ShaderEffect {
 +                id: nodeShader
@@ -91,13 +91,13 @@ index f5b4c15..94fe25c 100755
 +
 +                property real u_time: 0
 +                property real u_aspect: width / height
-+                property real u_scale: Config.constellation.scale
-+                property real u_speed: Config.constellation.speed
-+                property real u_alpha: Config.constellation.alpha
-+                property real u_lineWidth: Config.constellation.lineWidth
-+                property color u_nodeColor: (Config.constellation.tintFromApp && root.main && root.main.selectedTint)
++                property real u_scale: appSettings.constellationScale
++                property real u_speed: appSettings.constellationSpeed
++                property real u_alpha: appSettings.constellationAlpha
++                property real u_lineWidth: appSettings.constellationLineWidth
++                property color u_nodeColor: (appSettings.constellationTintFromApp && root.main && root.main.selectedTint)
 +                    ? root.main.selectedTint : Config.constellation.nodeColor
-+                property color u_edgeColor: (Config.constellation.tintFromApp && root.main && root.main.selectedTint)
++                property color u_edgeColor: (appSettings.constellationTintFromApp && root.main && root.main.selectedTint)
 +                    ? root.main.selectedTint : Config.constellation.edgeColor
 +
 +                Behavior on u_nodeColor { ColorAnimation { duration: 400 } }
@@ -130,7 +130,9 @@ index f5b4c15..94fe25c 100755
 +                property var now: new Date()
 +                property int hour24: now.getHours()
 +                property int hour12: hour24 % 12 || 12
-+                text: ("0" + hour12).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2)
++                text: appSettings.clock24h
++                    ? ("0" + hour24).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2)
++                    : ("0" + hour12).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2)
 +                font.pixelSize: 96
 +                color: "#ffffff"
 +                font.family: headerFont()
@@ -145,7 +147,7 @@ index f5b4c15..94fe25c 100755
 +                text: timeText.hour24 >= 12 ? "PM" : "AM"
 +                font.pixelSize: 36
 +                color: "#ffffff"
-+                visible: false
++                visible: appSettings.showAmPm && !appSettings.clock24h
 +            }
 +
 +            Text {
@@ -182,10 +184,25 @@ index f5b4c15..94fe25c 100755
 +            property string haToken: "${HA_TOKEN}"
 +            property string weatherEntity: "${HA_ENTITY}"
 +            property string temp: ""
++            property var tempRaw: undefined
++            property string tempSrc: "°C"
 +            property string condition: ""
 +            property var forecast: []
 +            property int forecastDays: 5
 +            property var dayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
++
++            function toUnit(v) {
++                var src = (weatherWidget.tempSrc.indexOf("F") >= 0) ? "F" : "C"
++                var dst = appSettings.weatherUnit
++                var x = Number(v)
++                if (src === "F" && dst === "C") x = (x - 32) * 5 / 9
++                if (src === "C" && dst === "F") x = x * 9 / 5 + 32
++                return x
++            }
++            function fmtTemp(v) {
++                if (v === undefined || v === null || isNaN(Number(v))) return ""
++                return Math.round(weatherWidget.toUnit(v)) + "\u00B0"
++            }
 +
 +            Timer {
 +                interval: 300000
@@ -202,7 +219,9 @@ index f5b4c15..94fe25c 100755
 +                xhr.onreadystatechange = function() {
 +                    if (xhr.readyState !== XMLHttpRequest.DONE || xhr.status !== 200) return
 +                    var data = JSON.parse(xhr.responseText)
-+                    weatherWidget.temp = Math.round(data.attributes.temperature) + "\u00B0"
++                    weatherWidget.tempRaw = data.attributes.temperature
++                    weatherWidget.tempSrc = data.attributes.unit_of_measurement || "°C"
++                    weatherWidget.temp = weatherWidget.fmtTemp(weatherWidget.tempRaw)
 +                    weatherWidget.condition = data.state
 +                    weatherWidget.fetchForecast()
 +                }
@@ -270,7 +289,7 @@ index f5b4c15..94fe25c 100755
 +                    opacity: 0.9
 +                    font.family: headerFont()
 +                    font.weight: Font.Heavy
-+                    text: weatherWidget.temp
++                    text: weatherWidget.fmtTemp(weatherWidget.tempRaw)
 +                }
 +            }
 +
@@ -310,7 +329,7 @@ index f5b4c15..94fe25c 100755
 +                            color: "#ffffff"
 +                            font.family: headerFont()
 +                            font.weight: Font.Heavy
-+                            text: Math.round(modelData.temperature) + "\u00B0"
++                            text: weatherWidget.fmtTemp(modelData.temperature)
 +                        }
 +                        Text {
 +                            anchors.horizontalCenter: parent.horizontalCenter
@@ -319,11 +338,19 @@ index f5b4c15..94fe25c 100755
 +                            opacity: 0.4
 +                            font.family: bodyFont()
 +                            font.weight: Font.Normal
-+                            text: Math.round(modelData.templow) + "\u00B0"
++                            text: weatherWidget.fmtTemp(modelData.templow)
 +                        }
 +                    }
 +                }
 +            }
++        }
++
++        // Global settings store (DB8-backed). Shader, clock and weather bind to
++        // this; the grid edits it via its Settings screen. Falls back to Config.
++        AppSettings {
++            id: appSettings
++            interfaces: interfaces
++            Component.onCompleted: load()
 +        }
 +
 +        // App grid
@@ -347,6 +374,7 @@ index f5b4c15..94fe25c 100755
 +                    item.iconTints = root.iconTints
 +                    item.tintChoices = Config.tintChoices
 +                    item.iconChoices = Config.iconChoices
++                    item.appSettings = appSettings
 +                    item._interfaces = interfaces
 +                    item.model = Qt.binding(function() {
 +                        return interfaces.launchPoints.launchPointsModel

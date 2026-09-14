@@ -51,9 +51,9 @@ var iconTints = {
 var constellationEnabled = true
 
 var constellation = {
-    scale: 6.5,        // grid density — higher = more points/lines
-    lineWidth: 0.014,  // edge thickness
-    speed: 0.5,        // animation speed
+    scale: 4.5,        // grid density — higher = more points/lines
+    lineWidth: 0.013,  // edge thickness
+    speed: 0.4,        // animation speed
     alpha: 0.6,        // overall opacity
     nodeColor: "#cba6f7",
     edgeColor: "#89b4fa",

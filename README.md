@@ -60,10 +60,12 @@ Update the `background.jpg` image to change the background
 ### In-app editing
 
 Hold the select button on an app tile to open a menu where you can hide/show,
-rename, recolour, and re-icon that app. The menu's **Manage all apps** entry
-lists every app (including hidden ones) so anything can be restored, and covers
-newly installed apps too. Changes are saved on the TV (DB8) and take precedence
-over `config.js`, so no rebuild/redeploy is needed — `config.js` stays as the
+rename, recolour, and re-icon that app. The menu's **Settings** entry opens the
+global settings screen: clock (12/24h, AM/PM), weather units, the background
+shader (all parameters), auto-hide for newly installed apps, and **Manage all
+apps** — which lists every app (including hidden ones) so anything can be
+restored. Everything is saved on the TV (DB8) and takes precedence over
+`config.js`, so no rebuild/redeploy is needed — `config.js` stays as the
 default/seed. The menu also shows the app's ID.
 
 To enable the AM/PM text on the clock:

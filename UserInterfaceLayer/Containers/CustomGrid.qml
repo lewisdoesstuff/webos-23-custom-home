@@ -25,6 +25,7 @@ FocusScope {
     property var tintChoices: []
     property var iconChoices: []
     property var _interfaces: undefined
+    property var appSettings: null
 
     property int cellWidth: 210
     property int cellHeight: 210
@@ -55,6 +56,13 @@ FocusScope {
 
     onModelChanged: root.capture()
 
+    // Recapture once the app settings (ordering, auto-hide baseline) are ready
+    Connections {
+        target: root.appSettings
+        ignoreUnknownSignals: true
+        onLoaded: root.capture()
+    }
+
     function initialize() {
         console.log("[CustomGrid] initialize")
         root.capture()
@@ -76,7 +84,7 @@ FocusScope {
         var id = root.appIdOf(raw)
         var ov = root.overrides[id] || {}
         var hidden = (typeof ov.hidden === "boolean") ? ov.hidden
-                                                     : (root.hiddenAppIds.indexOf(id) !== -1)
+                     : (root.hiddenAppIds.indexOf(id) !== -1 || root._isAutoHidden(id))
         var name = (ov.name !== undefined && ov.name !== "") ? ov.name
                                                              : (root.displayNames[id] || (e ? e.title : "") || "")
         var tint = (ov.tint !== undefined && ov.tint !== "") ? ov.tint
@@ -92,6 +100,30 @@ FocusScope {
         return null
     }
 
+    // Apps installed after the baseline are hidden when auto-hide is on.
+    function _isAutoHidden(id) {
+        if (!root.appSettings || !root.appSettings.autoHideNewApps) return false
+        var known = root.appSettings.knownApps || []
+        if (known.length === 0) return false   // baseline not seeded yet
+        return known.indexOf(id) === -1
+    }
+
+    function _syncKnownApps() {
+        if (!root.appSettings) return
+        var known = root.appSettings.knownApps ? root.appSettings.knownApps.slice() : []
+        var empty = known.length === 0
+        var changed = false
+        for (var i = 0; i < root.allEntries.length; i++) {
+            var id = root.appIdOf(root.allEntries[i])
+            if (id === "") continue
+            if (known.indexOf(id) === -1 && (empty || !root.appSettings.autoHideNewApps)) {
+                known.push(id)
+                changed = true
+            }
+        }
+        if (changed) { root.appSettings.knownApps = known; root.appSettings.save() }
+    }
+
     // ---- capture source model (non-destructive) ----
     function capture() {
         if (!root.model || root.model.count === 0) return
@@ -99,6 +131,15 @@ FocusScope {
         for (var i = 0; i < root.model.count; i++) {
             var e = root.model.get(i)
             if (e) arr.push(e)
+        }
+        // Apply custom ordering (apps not listed keep their relative position at the end)
+        if (root.appSettings && root.appSettings.appOrder && root.appSettings.appOrder.length) {
+            var order = root.appSettings.appOrder
+            arr.sort(function (a, b) {
+                var ia = order.indexOf(root.appIdOf(a)); if (ia < 0) ia = 9999
+                var ib = order.indexOf(root.appIdOf(b)); if (ib < 0) ib = 9999
+                return ia - ib
+            })
         }
         root.allEntries = arr
         root.rebuild()          // render immediately with config defaults
@@ -156,6 +197,7 @@ FocusScope {
 
     // ---- rebuild models ----
     function rebuild() {
+        root._syncKnownApps()
         root.rebuildDisplay()
         root.rebuildManage()
         root.syncSelectedTint()
@@ -223,7 +265,15 @@ FocusScope {
         return { appId: e.appId, name: e.name, hidden: e.hidden, tint: e.tint, icon: e.icon }
     }
 
+    function closeAllOverlays() {
+        menu.close()
+        panel.close()
+        settingsScreen.close()
+        renameKb.close()
+    }
+
     function openMenu(appId, keyHeld) {
+        root.closeAllOverlays()
         menu.entry = root.menuEntryFor(appId)
         menu.open(keyHeld === true)
         grid.enabled = false
@@ -236,9 +286,16 @@ FocusScope {
     }
 
     function openManage() {
+        root.closeAllOverlays()
+        panel.open()
+        grid.enabled = false
+    }
+
+    function openSettings() {
+        root.closeAllOverlays()
         root._menuReturnRow = menu.row
         menu.close()
-        panel.open()
+        settingsScreen.open(false)
         grid.enabled = false
     }
 
@@ -267,7 +324,7 @@ FocusScope {
             menu.entry.icon = path
             root.rebuildDisplay()
         }
-        onManageRequested: root.openManage()
+        onSettingsRequested: root.openSettings()
         onResetRequested: {
             delete root.overrides[menu.entry.appId]
             root.overrides = root.overrides
@@ -276,6 +333,19 @@ FocusScope {
             root.closeMenu()
         }
         onClosed: root.closeMenu()
+    }
+
+    // Settings screen
+    SettingsScreen {
+        id: settingsScreen
+        anchors.fill: parent
+        appSettings: root.appSettings
+        onManageRequested: { settingsScreen.close(); root.openManage() }
+        onBackRequested: {
+            settingsScreen.close()
+            menu.open(false, root._menuReturnRow)
+            grid.enabled = false
+        }
     }
 
     // Manage-all panel
@@ -287,7 +357,7 @@ FocusScope {
         onClosed: root.closeManage()
         onBackRequested: {
             panel.close()
-            menu.open(false, root._menuReturnRow)
+            settingsScreen.open(false)
             grid.enabled = false
         }
     }
@@ -311,7 +381,7 @@ FocusScope {
     // Rename via the built-in on-screen keyboard
     function renameApp(appId) {
         var current = root.menuEntryFor(appId).name
-        menu.close()
+        root.closeAllOverlays()
         renameKb.appId = appId
         renameKb.open(current)
         grid.enabled = false
