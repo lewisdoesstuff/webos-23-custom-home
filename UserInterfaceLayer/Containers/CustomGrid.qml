@@ -48,6 +48,15 @@ FocusScope {
     property bool _docExists: false
     property int _menuReturnRow: 0
 
+    // Reorder mode: one visible app is "held" and the arrows move it
+    property bool reorderMode: false
+    property string reorderAppId: ""
+
+    function isBackKey(key) {
+        return key === Qt.Key_Back || key === Qt.Key_Escape ||
+               key === Qt.Key_Cancel || key === 18874371
+    }
+
     ListModel { id: displayModel }
     ListModel { id: manageModel }
 
@@ -291,6 +300,83 @@ FocusScope {
         grid.enabled = false
     }
 
+    function enterReorder() {
+        if (displayModel.count === 0) return
+        root.closeAllOverlays()
+        var idx = Math.max(0, Math.min(grid.currentIndex, displayModel.count - 1))
+        root.reorderAppId = displayModel.get(idx).appId
+        root.reorderMode = true
+        grid.currentIndex = idx
+        grid.enabled = true
+        grid.forceActiveFocus()
+    }
+
+    function exitReorder() {
+        root.reorderMode = false
+        root.reorderAppId = ""
+        grid.forceActiveFocus()
+    }
+
+    function reorderName() {
+        for (var i = 0; i < displayModel.count; i++)
+            if (displayModel.get(i).appId === root.reorderAppId) return displayModel.get(i).name
+        return ""
+    }
+
+    // Move the held app to a visible slot, keeping hidden apps in place, then persist.
+    function applyVisibleMove(id, toVisIndex) {
+        var vis = []
+        for (var i = 0; i < displayModel.count; i++) vis.push(displayModel.get(i).appId)
+        var from = vis.indexOf(id)
+        if (from < 0) return
+        vis.splice(from, 1)
+        toVisIndex = Math.max(0, Math.min(vis.length, toVisIndex))
+        vis.splice(toVisIndex, 0, id)
+
+        var hidden = {}
+        for (var k = 0; k < root.allEntries.length; k++) {
+            var hid = root.appIdOf(root.allEntries[k])
+            if (root.eff(root.allEntries[k]).hidden) hidden[hid] = true
+        }
+
+        var oldFull = []
+        for (var m = 0; m < root.allEntries.length; m++) oldFull.push(root.appIdOf(root.allEntries[m]))
+        var vi = 0
+        var newFull = []
+        for (var n = 0; n < oldFull.length; n++) {
+            if (hidden[oldFull[n]]) newFull.push(oldFull[n])
+            else newFull.push(vis[vi++])
+        }
+
+        var byId = {}
+        for (var q = 0; q < root.allEntries.length; q++) byId[root.appIdOf(root.allEntries[q])] = root.allEntries[q]
+        var reordered = []
+        for (var r = 0; r < newFull.length; r++) {
+            if (byId[newFull[r]]) reordered.push(byId[newFull[r]])
+        }
+        root.allEntries = reordered
+
+        if (root.appSettings) {
+            root.appSettings.appOrder = newFull.slice()
+            root.appSettings.save()
+        }
+        // Animate the visible move; refresh the manage list only (it is closed in reorder mode)
+        displayModel.move(from, toVisIndex, 1)
+        root.rebuildManage()
+        grid.currentIndex = toVisIndex
+        root.syncSelectedTint()
+    }
+
+    function moveHeld(dx, dy) {
+        if (!root.reorderMode || root.reorderAppId === "" || displayModel.count === 0) return
+        var cols = Math.max(1, Math.floor(grid.width / root.cellWidth))
+        var cur = grid.currentIndex
+        var target = cur + dx + dy * cols
+        target = Math.max(0, Math.min(displayModel.count - 1, target))
+        if (target === cur) return
+        root.applyVisibleMove(root.reorderAppId, target)
+    }
+
     function openSettings() {
         root.closeAllOverlays()
         root._menuReturnRow = menu.row
@@ -354,11 +440,34 @@ FocusScope {
         anchors.fill: parent
         appsModel: manageModel
         onToggleRequested: root.toggleHidden(appId)
+        onReorderRequested: root.enterReorder()
         onClosed: root.closeManage()
         onBackRequested: {
             panel.close()
             settingsScreen.open(false)
             grid.enabled = false
+        }
+    }
+
+    // Reorder-mode hint bar
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 16
+        height: 48
+        radius: 12
+        color: "#1e1e2e"
+        border.color: "#cba6f7"
+        border.width: 2
+        visible: root.reorderMode
+        z: 120
+        Text {
+            anchors.centerIn: parent
+            text: "Moving " + root.reorderName() + "  ·  arrows move  ·  OK drops  ·  Back cancels"
+            color: "#cdd6f4"
+            font.family: root.bodyFont()
+            font.pixelSize: 17
         }
     }
 
@@ -409,10 +518,33 @@ FocusScope {
         model: displayModel
         cacheBuffer: Math.max(cellWidth * 4, cellHeight * 4)
 
+        populate: Transition {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 220 }
+        }
+        add: Transition {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 }
+        }
+        remove: Transition {
+            NumberAnimation { property: "opacity"; to: 0; duration: 150 }
+        }
+        move: Transition {
+            NumberAnimation { properties: "x,y"; duration: 260; easing.type: Easing.OutCubic }
+        }
+        displaced: Transition {
+            NumberAnimation { properties: "x,y"; duration: 260; easing.type: Easing.OutCubic }
+        }
+
         delegate: Item {
             id: cell
             width: grid.cellWidth
             height: grid.cellHeight
+            transformOrigin: Item.Center
+            scale: (cell.activeFocus || tileBg.held) ? 1.04 : 1.0
+            layer.enabled: true
+            layer.smooth: true
+            layer.textureSize: Qt.size(root.cellWidth * 2, root.cellHeight * 2)
+
+            Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
             property bool longPressed: false
 
@@ -438,12 +570,33 @@ FocusScope {
             }
 
             Keys.onPressed: {
+                if (root.reorderMode) {
+                    switch (event.key) {
+                    case Qt.Key_Up: root.moveHeld(0, -1); event.accepted = true; break
+                    case Qt.Key_Down: root.moveHeld(0, 1); event.accepted = true; break
+                    case Qt.Key_Left: root.moveHeld(-1, 0); event.accepted = true; break
+                    case Qt.Key_Right: root.moveHeld(1, 0); event.accepted = true; break
+                    default:
+                        if (root.isBackKey(event.key) || cell.isActivate(event.key)) event.accepted = true
+                    }
+                    return
+                }
                 if (cell.isActivate(event.key)) {
                     if (!event.isAutoRepeat) { cell.longPressed = false; pressTimer.start() }
                     event.accepted = true
                 }
             }
             Keys.onReleased: {
+                if (root.reorderMode) {
+                    if (cell.isActivate(event.key)) {
+                        root.exitReorder()
+                        event.accepted = true
+                    } else if (root.isBackKey(event.key)) {
+                        root.exitReorder()
+                        event.accepted = true
+                    }
+                    return
+                }
                 if (cell.isActivate(event.key)) {
                     pressTimer.stop()
                     if (!cell.longPressed) {
@@ -456,16 +609,30 @@ FocusScope {
             }
 
             Rectangle {
+                id: tileBg
                 anchors.fill: parent
                 anchors.margins: 6
                 radius: 14
-                color: cell.activeFocus ? "#313244" : "#1e1e2e"
-                border.color: cell.activeFocus ? "#cba6f7" : "transparent"
-                border.width: cell.activeFocus ? 2 : 0
-                opacity: cell.activeFocus ? 1 : 0.6
+                property bool held: root.reorderMode && model.appId === root.reorderAppId
+                color: (cell.activeFocus || held) ? "#313244" : "#1e1e2e"
+                border.color: held ? "#f9e2af" : (cell.activeFocus ? (model.tint || "#cba6f7") : "transparent")
+                border.width: (cell.activeFocus || held) ? 2 : 0
+                opacity: (cell.activeFocus || held) ? 1 : 0.6
 
                 Behavior on opacity { NumberAnimation { duration: 150 } }
                 Behavior on color { ColorAnimation { duration: 150 } }
+            }
+
+            DropShadow {
+                anchors.fill: tileBg
+                source: tileBg
+                radius: 22
+                samples: 23
+                color: model.tint || "#cba6f7"
+                opacity: (cell.activeFocus || tileBg.held) ? 0.35 : 0.0
+                visible: opacity > 0.01
+
+                Behavior on opacity { NumberAnimation { duration: 180 } }
             }
 
             Item {
@@ -481,6 +648,8 @@ FocusScope {
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
                     cache: false
+                    smooth: true
+                    mipmap: true
                     visible: !model.tint
                 }
 
@@ -511,11 +680,13 @@ FocusScope {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
+                    if (root.reorderMode) { root.exitReorder(); return }
                     grid.currentIndex = index
                     grid.forceActiveFocus()
                     cell.launch()
                 }
                 onPressAndHold: {
+                    if (root.reorderMode) return
                     grid.currentIndex = index
                     root.openMenu(model.appId, false)
                 }

@@ -64,8 +64,9 @@ rename, recolour, and re-icon that app. The menu's **Settings** entry opens the
 global settings screen: clock (12/24h, AM/PM), weather units, the background
 shader (all parameters), auto-hide for newly installed apps, and **Manage all
 apps** — which lists every app (including hidden ones) so anything can be
-restored. Everything is saved on the TV (DB8) and takes precedence over
-`config.js`, so no rebuild/redeploy is needed — `config.js` stays as the
+restored, and offers a **Reorder apps** mode (pick up with OK, move in any
+direction, OK drops). Everything is saved on the TV (DB8) and takes precedence
+over `config.js`, so no rebuild/redeploy is needed — `config.js` stays as the
 default/seed. The menu also shows the app's ID.
 
 To enable the AM/PM text on the clock:
