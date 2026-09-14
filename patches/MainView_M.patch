@@ -1,5 +1,5 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..a94d2aa 100755
+index f5b4c15..b106161 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
 @@ -19,6 +19,7 @@ import "Main"
@@ -59,7 +59,7 @@ index f5b4c15..a94d2aa 100755
      Connections {
          target : systemProperties
  
-@@ -695,6 +729,257 @@ FocusScope {
+@@ -695,6 +729,291 @@ FocusScope {
              enabled: systemProperties.testOverlayLoader ? true : !uiController.showOverlayPopup
  
              sourceComponent: layoutRepeater.layoutTypeReady ? getLayoutComponent() : undefined
@@ -73,6 +73,40 @@ index f5b4c15..a94d2aa 100755
 +            source: "file:///media/developer/apps/usr/palm/applications/ooo.lew.customhome/assets/background.png"
 +            z: 5
 +            visible: !uiController.isEditMode
++        }
++
++        // Node/edge constellation overlay
++        Item {
++            id: constellation
++            anchors.fill: parent
++            z: 5
++            visible: Config.constellationEnabled && !uiController.isEditMode
++
++            ShaderEffect {
++                id: nodeShader
++                width: Math.ceil(parent.width / 2)
++                height: Math.ceil(parent.height / 2)
++                transformOrigin: Item.TopLeft
++                scale: 2
++
++                property real u_time: 0
++                property real u_aspect: width / height
++                property real u_scale: Config.constellation.scale
++                property real u_speed: Config.constellation.speed
++                property real u_alpha: Config.constellation.alpha
++                property real u_lineWidth: Config.constellation.lineWidth
++                property color u_nodeColor: Config.constellation.nodeColor
++                property color u_edgeColor: Config.constellation.edgeColor
++
++                fragmentShader: Qt.resolvedUrl("shaders/nodes.frag")
++
++                Timer {
++                    interval: 33
++                    repeat: true
++                    running: constellation.visible
++                    onTriggered: nodeShader.u_time += 0.033
++                }
++            }
 +        }
 +
 +        // Clock

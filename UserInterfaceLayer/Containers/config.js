@@ -44,3 +44,17 @@ var iconTints = {
     "com.limelight.webos":        "#74c7ec",  // Sapphire
     "com.webos.app.browser":      "#89dceb",  // Sky
 }
+
+// ---- Background constellation (node/edge) effect ----
+
+// Master on/off switch for the animated background
+var constellationEnabled = true
+
+var constellation = {
+    scale: 6.0,        // grid density — higher = more points/lines
+    lineWidth: 0.012,  // edge thickness
+    speed: 0.5,        // animation speed
+    alpha: 0.6,        // overall opacity
+    nodeColor: "#cba6f7",
+    edgeColor: "#89b4fa"
+}
