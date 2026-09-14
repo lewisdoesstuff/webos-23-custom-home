@@ -34,6 +34,9 @@ FocusScope {
 
     property bool _filtering: false
 
+    // Tint of the currently highlighted app ("" if none) — consumed by the background shader
+    property string selectedTint: ""
+
     onModelChanged: { if (!root._filtering) root.filterAndLoad() }
 
     function initialize() {
@@ -44,6 +47,21 @@ FocusScope {
     function getId(entry) {
         return entry.id || entry.launchPointId ||
                (entry.entry ? (entry.entry.id || entry.entry.launchPointId) : "")
+    }
+
+    // Resolve the accent tint for a model entry (per-app override, else its own iconColor)
+    function tintForEntry(entry) {
+        if (!entry) return ""
+        var e = entry.entry || entry
+        var id = e.id || ""
+        if (root.iconTints[id]) return root.iconTints[id]
+        return typeof e.iconColor === "string" ? e.iconColor : ""
+    }
+
+    function syncSelectedTint() {
+        if (!root.model || root.model.count === 0) { root.selectedTint = ""; return }
+        var idx = Math.max(0, Math.min(grid.currentIndex, root.model.count - 1))
+        root.selectedTint = root.tintForEntry(root.model.get(idx))
     }
 
     function filterAndLoad() {
@@ -62,6 +80,7 @@ FocusScope {
         }
         console.log("[CustomGrid] done, removed:", removed, "remaining:", model.count)
         root._filtering = false
+        root.syncSelectedTint()
         root.ready()
         root.modelProcessed()
         root.updateShelf()
@@ -73,6 +92,8 @@ FocusScope {
         id: grid
         objectName: "mainList"
         property bool editEnabled: false
+
+        onCurrentIndexChanged: root.syncSelectedTint()
 
         anchors.fill: parent
         anchors.margins: 12
@@ -159,15 +180,7 @@ FocusScope {
                 }
             }
 
-            property string _iconTint: {
-                if (!entry) return ""
-                var e = entry.entry || entry
-                var id = e.id || ""
-                // Per-app override takes precedence
-                if (root.iconTints[id]) return root.iconTints[id]
-                // Fall back to app's own iconColor
-                return typeof e.iconColor === "string" ? e.iconColor : ""
-            }
+            property string _iconTint: root.tintForEntry(entry)
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter

@@ -51,6 +51,8 @@ Edit `UserInterfaceLayer/Containers/config.js`:
 - `displayNames` — rename apps  
 - `customIcons` — override app icons (PNG)
 - `iconTints` — per-app color overlay (Catppuccin palette)
+- `constellationEnabled` — master on/off for the animated background
+- `constellation` — background animation options (`scale`, `lineWidth`, `speed`, `alpha`, `nodeColor`, `edgeColor`, `tintFromApp`)
 
 Place custom icons in `assets/icons/`.  
 Update the `background.jpg` image to change the background

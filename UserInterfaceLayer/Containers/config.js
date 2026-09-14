@@ -51,10 +51,11 @@ var iconTints = {
 var constellationEnabled = true
 
 var constellation = {
-    scale: 6.0,        // grid density — higher = more points/lines
-    lineWidth: 0.012,  // edge thickness
+    scale: 6.5,        // grid density — higher = more points/lines
+    lineWidth: 0.014,  // edge thickness
     speed: 0.5,        // animation speed
     alpha: 0.6,        // overall opacity
     nodeColor: "#cba6f7",
-    edgeColor: "#89b4fa"
+    edgeColor: "#89b4fa",
+    tintFromApp: true  // tint the nodes/edges with the highlighted app's colour
 }
