@@ -59,3 +59,32 @@ var constellation = {
     edgeColor: "#89b4fa",
     tintFromApp: true  // tint the nodes/edges with the highlighted app's colour
 }
+
+// ---- In-app editor choices ----
+
+// Tint swatches offered in the long-press menu ("" = app/config default)
+var tintChoices = [
+    "",          // Default
+    "#89b4fa",   // Blue
+    "#a6e1a1",   // Green
+    "#f38ba8",   // Red
+    "#f9e2af",   // Yellow
+    "#cba6f7",   // Mauve
+    "#fab387",   // Peach
+    "#74c7ec",   // Sapphire
+    "#89dceb",   // Sky
+    "#94e2d5"    // Teal
+]
+
+// Icons offered in the long-press menu (path is relative to CustomGrid.qml)
+var iconChoices = [
+    { name: "App default", path: "" },
+    { name: "Browser",     path: "../../assets/icons/browser.png" },
+    { name: "Dropout",     path: "../../assets/icons/dropout.png" },
+    { name: "Homebrew",    path: "../../assets/icons/homebrew.png" },
+    { name: "Moonlight",   path: "../../assets/icons/moonlight.png" },
+    { name: "Plex",        path: "../../assets/icons/plex.png" },
+    { name: "Spotify",     path: "../../assets/icons/spotify.png" },
+    { name: "Twitch",      path: "../../assets/icons/twitch.png" },
+    { name: "YouTube",     path: "../../assets/icons/youtube.png" }
+]

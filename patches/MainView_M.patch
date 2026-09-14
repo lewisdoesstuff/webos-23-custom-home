@@ -1,5 +1,5 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..73809f0 100755
+index f5b4c15..94fe25c 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
 @@ -19,6 +19,7 @@ import "Main"
@@ -59,7 +59,7 @@ index f5b4c15..73809f0 100755
      Connections {
          target : systemProperties
  
-@@ -695,6 +729,296 @@ FocusScope {
+@@ -695,6 +729,298 @@ FocusScope {
              enabled: systemProperties.testOverlayLoader ? true : !uiController.showOverlayPopup
  
              sourceComponent: layoutRepeater.layoutTypeReady ? getLayoutComponent() : undefined
@@ -345,6 +345,8 @@ index f5b4c15..73809f0 100755
 +                    item.displayNames = root.displayNames
 +                    item.customIcons = root.customIcons
 +                    item.iconTints = root.iconTints
++                    item.tintChoices = Config.tintChoices
++                    item.iconChoices = Config.iconChoices
 +                    item._interfaces = interfaces
 +                    item.model = Qt.binding(function() {
 +                        return interfaces.launchPoints.launchPointsModel
