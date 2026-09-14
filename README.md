@@ -81,5 +81,8 @@ Copyright (c) 2016-2023 The Inter Project Authors
 "Inter" is trademark of Rasmus Andersson.
 https://github.com/rsms/inter
 
+Copyright (c) 2016 The Overpass Project Authors
+https://github.com/RedHatOfficial/Overpass
+
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 See https://openfontlicense.org/ for full terms.

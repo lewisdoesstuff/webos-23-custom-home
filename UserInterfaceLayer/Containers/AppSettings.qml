@@ -18,6 +18,8 @@ Item {
     // Clock
     property bool clock24h: true
     property bool showAmPm: false
+    property bool flashSeparator: false
+    property string greeterName: ""
     // Weather
     property string weatherUnit: "C"
     // Background shader (seeded from config.js)
@@ -80,6 +82,8 @@ Item {
     function apply(prefs) {
         if (prefs.clock24h !== undefined) s.clock24h = prefs.clock24h
         if (prefs.showAmPm !== undefined) s.showAmPm = prefs.showAmPm
+        if (prefs.flashSeparator !== undefined) s.flashSeparator = prefs.flashSeparator
+        if (prefs.greeterName !== undefined) s.greeterName = prefs.greeterName
         if (prefs.weatherUnit !== undefined) s.weatherUnit = prefs.weatherUnit
         if (prefs.constellationEnabled !== undefined) s.constellationEnabled = prefs.constellationEnabled
         if (prefs.constellationScale !== undefined) s.constellationScale = prefs.constellationScale
@@ -103,6 +107,8 @@ Item {
             defaultsRev: s.defaultsRev,
             clock24h: s.clock24h,
             showAmPm: s.showAmPm,
+            flashSeparator: s.flashSeparator,
+            greeterName: s.greeterName,
             weatherUnit: s.weatherUnit,
             constellationEnabled: s.constellationEnabled,
             constellationScale: s.constellationScale,

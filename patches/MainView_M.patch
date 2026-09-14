@@ -1,5 +1,5 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..ae482ea 100755
+index f5b4c15..e36305e 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
 @@ -19,6 +19,7 @@ import "Main"
@@ -22,7 +22,7 @@ index f5b4c15..ae482ea 100755
      LayoutMirroring.childrenInherit: true
  
      onVisibleChanged: {
-@@ -72,6 +76,36 @@ FocusScope {
+@@ -72,6 +76,40 @@ FocusScope {
  
      focus: true
  
@@ -46,6 +46,7 @@ index f5b4c15..ae482ea 100755
 +
 +    FontLoader { id: headerFontLoader; source: "../../assets/fonts/header.ttf" }
 +    FontLoader { id: bodyFontLoader; source: "../../assets/fonts/body.ttf" }
++    FontLoader { id: overpassClock; source: "../../assets/fonts/overpass-extrabold.ttf" }
 +
 +    function headerFont() {
 +        return headerFontLoader.name || (styleSheet.fontManager
@@ -55,11 +56,14 @@ index f5b4c15..ae482ea 100755
 +        return bodyFontLoader.name || (styleSheet.fontManager
 +            ? styleSheet.fontManager.smart_Regular.family : "")
 +    }
++    function clockFont() {
++        return overpassClock.name || headerFont()
++    }
 +
      Connections {
          target : systemProperties
  
-@@ -695,6 +729,326 @@ FocusScope {
+@@ -695,6 +733,412 @@ FocusScope {
              enabled: systemProperties.testOverlayLoader ? true : !uiController.showOverlayPopup
  
              sourceComponent: layoutRepeater.layoutTypeReady ? getLayoutComponent() : undefined
@@ -114,71 +118,112 @@ index f5b4c15..ae482ea 100755
 +            }
 +        }
 +
-+        // Clock
++        // Editorial hero (Bento)
 +        Item {
-+            id: clockArea
-+            anchors.horizontalCenter: parent.horizontalCenter
-+            y: parent.height * 0.05
-+            width: 400
-+            height: 120
++            id: editorialHero
++            anchors.left: parent.left
++            anchors.right: parent.right
++            anchors.leftMargin: parent.width * 0.05
++            anchors.rightMargin: parent.width * 0.05
++            y: parent.height * 0.04
++            height: parent.height * 0.40
 +            z: 6
 +
-+            Text {
++            // Zero-size time holder; visuals read timeText.now/hour24/hour12
++            Item {
 +                id: timeText
-+                anchors.horizontalCenter: parent.horizontalCenter
-+                anchors.top: parent.top
++                width: 0
++                height: 0
 +                property var now: new Date()
 +                property int hour24: now.getHours()
 +                property int hour12: hour24 % 12 || 12
-+                text: appSettings.clock24h
-+                    ? ("0" + hour24).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2)
-+                    : ("0" + hour12).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2)
-+                font.pixelSize: 96
-+                color: "#ffffff"
-+                font.family: headerFont()
-+                font.weight: Font.Heavy
++
++                Timer {
++                    interval: 1000
++                    repeat: true
++                    running: true
++                    onTriggered: timeText.now = new Date()
++                }
 +            }
 +
-+            Text {
-+                id: ampmText
-+                anchors.left: timeText.right
-+                anchors.leftMargin: 12
-+                anchors.baseline: timeText.baseline
-+                text: timeText.hour24 >= 12 ? "PM" : "AM"
-+                font.pixelSize: 36
-+                color: "#ffffff"
-+                visible: appSettings.showAmPm && !appSettings.clock24h
++            // LEFT clock, vertically centered
++            Item {
++                id: clockArea
++                anchors.left: parent.left
++                anchors.verticalCenter: parent.verticalCenter
++                width: childrenRect.width
++                height: childrenRect.height
++
++                Row {
++                    id: clockRow
++                    anchors.verticalCenter: parent.verticalCenter
++                    spacing: 0
++
++                    Text {
++                        id: hourText
++                        text: appSettings.clock24h ? timeText.hour24 : timeText.hour12
++                        font.pixelSize: 200
++                        color: "#ffffff"
++                        font.family: clockFont()
++                        font.weight: Font.ExtraBold
++                        font.letterSpacing: -6
++                    }
++                    // Bento-style square separator: two stacked dots
++                    Item {
++                        id: colonDots
++                        width: 44
++                        height: clockRow.height
++                        opacity: 1
++
++                        Column {
++                            anchors.centerIn: parent
++                            spacing: 30
++
++                            Rectangle { width: 24; height: 24; radius: 6; color: "#ffffff" }
++                            Rectangle { width: 24; height: 24; radius: 6; color: "#ffffff" }
++                        }
++
++                        SequentialAnimation on opacity {
++                            loops: Animation.Infinite
++                            running: appSettings.flashSeparator
++                            onRunningChanged: {
++                                if (!running) colonDots.opacity = 1
++                            }
++                            NumberAnimation { from: 1; to: 0.25; duration: 500 }
++                            NumberAnimation { from: 0.25; to: 1; duration: 500 }
++                        }
++                    }
++                    Text {
++                        id: minuteText
++                        text: ("0" + timeText.now.getMinutes()).slice(-2)
++                        font.pixelSize: 200
++                        color: "#ffffff"
++                        font.family: clockFont()
++                        font.weight: Font.ExtraBold
++                        font.letterSpacing: -6
++                    }
++                }
++
++                Text {
++                    id: ampmText
++                    anchors.left: clockRow.right
++                    anchors.leftMargin: 12
++                    anchors.baseline: minuteText.baseline
++                    text: timeText.hour24 >= 12 ? "pm" : "am"
++                    font.pixelSize: 56
++                    color: "#ffffff"
++                    font.family: bodyFont()
++                    visible: appSettings.showAmPm && !appSettings.clock24h
++                }
 +            }
 +
-+            Text {
-+                anchors.horizontalCenter: parent.horizontalCenter
-+                anchors.top: timeText.bottom
-+                anchors.topMargin: 4
-+                text: Qt.formatDate(timeText.now, "dddd, MMMM d")
-+                font.pixelSize: 24
-+                font.family: bodyFont()
-+                font.weight: Font.Normal
-+                color: "#ffffff"
-+                opacity: 0.7
-+            }
-+
-+            Timer {
-+                interval: 1000
-+                repeat: true
-+                running: true
-+                onTriggered: timeText.now = new Date()
-+            }
-+        }
-+
-+        // Weather from Home Assistant
-+        Item {
++            // Weather from Home Assistant (RIGHT details column)
++            Column {
 +            id: weatherWidget
-+            anchors.horizontalCenter: parent.horizontalCenter
-+            anchors.top: clockArea.bottom
-+            anchors.topMargin: 42
-+            width: 700
-+            height: 160
-+            z: 6
++            anchors.right: parent.right
++            anchors.verticalCenter: parent.verticalCenter
++            width: parent.width * 0.42
++            spacing: 4
 +
 +            property string haUrl: "${HA_URL}"
 +            property string haToken: "${HA_TOKEN}"
@@ -273,76 +318,121 @@ index f5b4c15..ae482ea 100755
 +
 +            Component.onCompleted: fetchWeather()
 +
-+            // Current conditions
-+            Row {
-+                anchors.horizontalCenter: parent.horizontalCenter
-+                spacing: 4
++            // Date
++            Text {
++                width: parent.width
++                horizontalAlignment: Text.AlignRight
++                text: Qt.formatDate(timeText.now, "dddd, MMM d")
++                font.pixelSize: 40
++                font.family: headerFont()
++                font.weight: Font.Bold
++                color: "#ffffff"
++            }
 +
-+                Text {
-+                    font.pixelSize: 26
-+                    color: "#ffffff"
-+                    text: weatherWidget.iconFor(weatherWidget.condition)
++            // Greeting
++            Text {
++                width: parent.width
++                horizontalAlignment: Text.AlignRight
++                text: {
++                    var h = timeText.hour24
++                    var prefix = (h >= 23 || h < 6) ? "Good night, " : h < 12 ? "Good morning, " : h < 17 ? "Good afternoon, " : "Good evening, "
++                    var name = appSettings.greeterName || ""
++                    if (name === "") return prefix.slice(0, -2)
++                    return prefix + name
 +                }
-+                Text {
-+                    font.pixelSize: 26
-+                    color: "#ffffff"
-+                    opacity: 0.9
-+                    font.family: headerFont()
-+                    font.weight: Font.Heavy
-+                    text: weatherWidget.fmtTemp(weatherWidget.tempRaw)
++                font.pixelSize: 20
++                font.family: bodyFont()
++                font.weight: Font.Normal
++                color: "#ffffff"
++                opacity: 0.7
++            }
++
++            // Current conditions, right-aligned
++            Item {
++                width: parent.width
++                height: currentRow.height
++
++                Row {
++                    id: currentRow
++                    anchors.right: parent.right
++                    spacing: 8
++
++                    Text {
++                        font.pixelSize: 26
++                        color: "#ffffff"
++                        text: weatherWidget.iconFor(weatherWidget.condition)
++                    }
++                    Text {
++                        font.pixelSize: 26
++                        color: "#ffffff"
++                        opacity: 0.9
++                        font.family: headerFont()
++                        font.weight: Font.Heavy
++                        text: weatherWidget.fmtTemp(weatherWidget.tempRaw)
++                    }
 +                }
 +            }
 +
-+            // Multi-day forecast
-+            Row {
-+                anchors.horizontalCenter: parent.horizontalCenter
-+                anchors.top: parent.top
-+                anchors.topMargin: 48
-+                spacing: 16
++            Item {
++                width: 1
++                height: 12
++            }
 +
-+                Repeater {
-+                    model: weatherWidget.forecast
++            // Multi-day forecast, right-aligned
++            Item {
++                width: parent.width
++                height: forecastRow.height
 +
-+                    Column {
-+                        spacing: 4
-+                        width: 80
-+                        anchors.verticalCenter: parent.verticalCenter
++                Row {
++                    id: forecastRow
++                    anchors.right: parent.right
++                    spacing: 16
 +
-+                        Text {
-+                            anchors.horizontalCenter: parent.horizontalCenter
-+                            font.pixelSize: 16
-+                            color: "#ffffff"
-+                            opacity: 0.7
-+                            font.family: bodyFont()
-+                            font.weight: Font.Normal
-+                            text: weatherWidget.weekday(modelData.datetime)
-+                        }
-+                        Text {
-+                            anchors.horizontalCenter: parent.horizontalCenter
-+                            font.pixelSize: 22
-+                            color: "#ffffff"
-+                            text: weatherWidget.iconFor(modelData.condition)
-+                        }
-+                        Text {
-+                            anchors.horizontalCenter: parent.horizontalCenter
-+                            font.pixelSize: 15
-+                            color: "#ffffff"
-+                            font.family: headerFont()
-+                            font.weight: Font.Heavy
-+                            text: weatherWidget.fmtTemp(modelData.temperature)
-+                        }
-+                        Text {
-+                            anchors.horizontalCenter: parent.horizontalCenter
-+                            font.pixelSize: 13
-+                            color: "#ffffff"
-+                            opacity: 0.4
-+                            font.family: bodyFont()
-+                            font.weight: Font.Normal
-+                            text: weatherWidget.fmtTemp(modelData.templow)
++                    Repeater {
++                        model: weatherWidget.forecast
++
++                        Column {
++                            spacing: 4
++                            width: 80
++                            anchors.verticalCenter: parent.verticalCenter
++
++                            Text {
++                                anchors.horizontalCenter: parent.horizontalCenter
++                                font.pixelSize: 16
++                                color: "#ffffff"
++                                opacity: 0.7
++                                font.family: bodyFont()
++                                font.weight: Font.Normal
++                                text: weatherWidget.weekday(modelData.datetime)
++                            }
++                            Text {
++                                anchors.horizontalCenter: parent.horizontalCenter
++                                font.pixelSize: 22
++                                color: "#ffffff"
++                                text: weatherWidget.iconFor(modelData.condition)
++                            }
++                            Text {
++                                anchors.horizontalCenter: parent.horizontalCenter
++                                font.pixelSize: 15
++                                color: "#ffffff"
++                                font.family: headerFont()
++                                font.weight: Font.Heavy
++                                text: weatherWidget.fmtTemp(modelData.temperature)
++                            }
++                            Text {
++                                anchors.horizontalCenter: parent.horizontalCenter
++                                font.pixelSize: 13
++                                color: "#ffffff"
++                                opacity: 0.4
++                                font.family: bodyFont()
++                                font.weight: Font.Normal
++                                text: weatherWidget.fmtTemp(modelData.templow)
++                            }
 +                        }
 +                    }
 +                }
 +            }
++        }
 +        }
 +
 +        // Global settings store (DB8-backed). Shader, clock and weather bind to
@@ -356,9 +446,9 @@ index f5b4c15..ae482ea 100755
 +        // App grid
 +        Item {
 +            width: parent.width
-+            height: parent.height * 0.45
++            height: parent.height * 0.42
 +            anchors.horizontalCenter: parent.horizontalCenter
-+            y: parent.height * 0.52
++            y: parent.height * 0.53
 +            z: 6
 +
 +            Loader {

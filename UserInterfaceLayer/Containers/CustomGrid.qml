@@ -181,9 +181,52 @@ FocusScope {
         })
     }
 
+    // Debounced exact-save: coalesces rapid edits (e.g. tint cycling) so only
+    // the final state hits DB8. Restartable — each persist() restarts the clock.
+    Timer {
+        id: persistDebounce
+        interval: 400
+        repeat: false
+        onTriggered: root._persistNow()
+    }
+
     function persist() {
+        persistDebounce.restart()
+    }
+
+    // Exact replace (del by mode, then put) chained via the services dispatch
+    // object with full DB8 args, bypassing the stock wrappers (which use
+    // merge and therefore can never delete keys — deleted overrides would
+    // resurrect on next load). First save goes through the same path: del
+    // simply matches nothing, then put creates the doc.
+    function _persistNow() {
         var app = root.appInterface()
         if (!app) return
+        var kind = (app.dbName && app.dbName !== "") ? app.dbName : "com.webos.app.home.preferences:1"
+        if (app.services && typeof app.services.removePreference === "function"
+                && typeof app.services.addPreference === "function") {
+            var delArgs = {
+                query: {
+                    from: kind,
+                    where: [{ prop: "mode", op: "=", val: "customOverrides" }]
+                }
+            }
+            var putArgs = {
+                objects: [{ _kind: kind, mode: "customOverrides", preferences: root.overrides }]
+            }
+            try {
+                app.services.removePreference(delArgs, function () {
+                    app.services.addPreference(putArgs, function () {
+                        root._docExists = true
+                    })
+                })
+            } catch (e) {
+                console.log("[CustomGrid] exact save failed, keeping in-memory state: " + e)
+            }
+            return
+        }
+        // Fallback for hosts without the services dispatch (e.g. minimal
+        // mocks): stock wrappers use merge semantics and may leave zombies.
         var doc = { mode: "customOverrides", preferences: root.overrides }
         if (root._docExists && typeof app.updatePreference === "function") {
             app.updatePreference(doc)
@@ -432,6 +475,13 @@ FocusScope {
             menu.open(false, root._menuReturnRow)
             grid.enabled = false
         }
+        onTextRequested: {
+            renameKb.purpose = "greeter"
+            renameKb.title = "Greeter name"
+            renameKb.appId = ""
+            renameKb.open(initial)
+            grid.enabled = false
+        }
     }
 
     // Manage-all panel
@@ -476,14 +526,30 @@ FocusScope {
         id: renameKb
         anchors.fill: parent
         onAccepted: {
-            root.setOverride(renameKb.appId, "name", text)
-            root.rebuildDisplay()
-            renameKb.close()
-            root.closeMenu()
+            if (renameKb.purpose === "greeter") {
+                if (root.appSettings) {
+                    root.appSettings.greeterName = text
+                    root.appSettings.save()
+                }
+                renameKb.close()
+                settingsScreen.open(false)
+                grid.enabled = false
+            } else {
+                root.setOverride(renameKb.appId, "name", text)
+                root.rebuildDisplay()
+                renameKb.close()
+                root.closeMenu()
+            }
         }
         onCancelled: {
-            renameKb.close()
-            root.closeMenu()
+            if (renameKb.purpose === "greeter") {
+                renameKb.close()
+                settingsScreen.open(false)
+                grid.enabled = false
+            } else {
+                renameKb.close()
+                root.closeMenu()
+            }
         }
     }
 
@@ -491,6 +557,8 @@ FocusScope {
     function renameApp(appId) {
         var current = root.menuEntryFor(appId).name
         root.closeAllOverlays()
+        renameKb.purpose = "app"
+        renameKb.title = "Rename app"
         renameKb.appId = appId
         renameKb.open(current)
         grid.enabled = false

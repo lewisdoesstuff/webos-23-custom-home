@@ -13,6 +13,8 @@ FocusScope {
 
     property string appId: ""
     property string text: ""
+    property string title: "Rename app"
+    property string purpose: "app"
     property int maxLength: 24
 
     signal accepted(string text)
@@ -66,7 +68,7 @@ FocusScope {
 
             Text {
                 width: parent.width
-                text: "Rename app"
+                text: kb.title
                 color: "#a6adc8"
                 font.family: kb.bodyFont()
                 font.pixelSize: 18

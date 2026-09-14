@@ -10,6 +10,7 @@ FocusScope {
 
     signal manageRequested()
     signal backRequested()
+    signal textRequested(string key, string initial)
 
     FontLoader { id: bodyFontLoader; source: "../../assets/fonts/body.ttf" }
     function bodyFont() { return bodyFontLoader.name || "" }
@@ -19,7 +20,9 @@ FocusScope {
         { type: "toggle", label: "Auto-hide new apps", key: "autoHideNewApps" },
         { type: "toggle", label: "24-hour clock", key: "clock24h" },
         { type: "toggle", label: "Show AM/PM", key: "showAmPm" },
+        { type: "toggle", label: "Blinking colon", key: "flashSeparator" },
         { type: "choice", label: "Temperature", key: "weatherUnit", values: ["C", "F"] },
+        { type: "text", label: "Greeter name", key: "greeterName" },
         { type: "toggle", label: "Background shader", key: "constellationEnabled" },
         { type: "number", label: "Shader density", key: "constellationScale", min: 3.0, max: 12.0, step: 0.5, decimals: 1 },
         { type: "number", label: "Shader edge width", key: "constellationLineWidth", min: 0.005, max: 0.03, step: 0.002, decimals: 3 },
@@ -47,12 +50,17 @@ FocusScope {
         if (r.type === "toggle") return appSettings[r.key] ? "On" : "Off"
         if (r.type === "choice") return r.values.indexOf(appSettings[r.key]) >= 0 ? appSettings[r.key] : r.values[0]
         if (r.type === "number") return Number(appSettings[r.key]).toFixed(r.decimals)
+        if (r.type === "text") {
+            var v = appSettings[r.key]
+            return (v === undefined || v === null) ? "" : String(v)
+        }
         return ""
     }
 
     function adjust(delta) {
         if (!appSettings) return
         var r = rows[row]
+        if (r.type === "text") return
         if (r.type === "toggle") {
             appSettings[r.key] = !appSettings[r.key]
         } else if (r.type === "choice") {
@@ -75,6 +83,10 @@ FocusScope {
         if (r.type === "action") {
             if (r.label === "Manage all apps") settings.manageRequested()
             else settings.backRequested()
+        } else if (r.type === "text") {
+            var v = appSettings ? appSettings[r.key] : ""
+            if (v === undefined || v === null) v = ""
+            settings.textRequested(r.key, String(v))
         } else {
             adjust(1)
         }
