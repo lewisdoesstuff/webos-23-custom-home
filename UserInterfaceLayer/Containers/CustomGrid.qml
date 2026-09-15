@@ -583,6 +583,16 @@ FocusScope {
         flickableDirection: Flickable.VerticalFlick
         clip: true
 
+        // Headroom *inside* the viewport so the focused tile's DropShadow isn't
+        // cut by this Flickable's clip. It has to be content (a header), not an
+        // anchor margin: a margin just moves the whole clipped viewport, so the
+        // top row still sits on the clip edge. The grid area above is nudged up
+        // by the same amount, leaving the tiles where they were.
+        header: Item {
+            width: grid.width
+            height: 16
+        }
+
         model: displayModel
         cacheBuffer: Math.max(cellWidth * 4, cellHeight * 4)
 

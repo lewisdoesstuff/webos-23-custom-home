@@ -1,5 +1,5 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..395c9c8 100755
+index f5b4c15..401a74a 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
 @@ -19,6 +19,7 @@ import "Main"
@@ -391,9 +391,9 @@ index f5b4c15..395c9c8 100755
 +        // App grid
 +        Item {
 +            width: parent.width
-+            height: parent.height * 0.42
++            height: parent.height * 0.435
 +            anchors.horizontalCenter: parent.horizontalCenter
-+            y: parent.height * 0.53
++            y: parent.height * 0.515
 +            z: 6
 +
 +            Loader {
