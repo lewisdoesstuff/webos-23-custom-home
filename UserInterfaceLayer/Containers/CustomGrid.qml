@@ -608,9 +608,6 @@ FocusScope {
             height: grid.cellHeight
             transformOrigin: Item.Center
             scale: (cell.activeFocus || tileBg.held) ? 1.04 : 1.0
-            layer.enabled: true
-            layer.smooth: true
-            layer.textureSize: Qt.size(root.cellWidth * 2, root.cellHeight * 2)
 
             Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
@@ -694,10 +691,11 @@ FocusScope {
             DropShadow {
                 anchors.fill: tileBg
                 source: tileBg
-                radius: 22
-                samples: 23
+                radius: 18
+                samples: 19
                 color: model.tint || "#cba6f7"
-                opacity: (cell.activeFocus || tileBg.held) ? 0.35 : 0.0
+                transparentBorder: true
+                opacity: (cell.activeFocus || tileBg.held) ? 0.5 : 0.0
                 visible: opacity > 0.01
 
                 Behavior on opacity { NumberAnimation { duration: 180 } }
@@ -708,6 +706,9 @@ FocusScope {
                 height: root.iconSize
                 anchors.centerIn: parent
                 anchors.verticalCenterOffset: -12
+                layer.enabled: true
+                layer.smooth: true
+                layer.textureSize: Qt.size(root.iconSize * 2, root.iconSize * 2)
 
                 Image {
                     id: iconImage

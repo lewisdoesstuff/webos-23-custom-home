@@ -1,5 +1,5 @@
 diff --git a/qml/UserInterfaceLayer/Containers/MainView_M.qml b/qml/UserInterfaceLayer/Containers/MainView_M.qml
-index f5b4c15..55f93a0 100755
+index f5b4c15..395c9c8 100755
 --- a/qml/UserInterfaceLayer/Containers/MainView_M.qml
 +++ b/qml/UserInterfaceLayer/Containers/MainView_M.qml
 @@ -19,6 +19,7 @@ import "Main"
@@ -63,7 +63,7 @@ index f5b4c15..55f93a0 100755
      Connections {
          target : systemProperties
  
-@@ -695,6 +733,349 @@ FocusScope {
+@@ -695,6 +733,357 @@ FocusScope {
              enabled: systemProperties.testOverlayLoader ? true : !uiController.showOverlayPopup
  
              sourceComponent: layoutRepeater.layoutTypeReady ? getLayoutComponent() : undefined
@@ -156,7 +156,7 @@ index f5b4c15..55f93a0 100755
 +
 +                Row {
 +                    id: clockRow
-+                    anchors.verticalCenter: parent.verticalCenter
++                    anchors.top: parent.top
 +                    spacing: 0
 +
 +                    Text {
@@ -214,6 +214,29 @@ index f5b4c15..55f93a0 100755
 +                    color: "#cdd6f4"
 +                    font.family: bodyFont()
 +                    visible: appSettings.showAmPm && !appSettings.clock24h
++                }
++
++                Text {
++                    id: greetingText
++                    anchors.horizontalCenter: clockRow.horizontalCenter
++                    anchors.top: clockRow.bottom
++                    anchors.topMargin: -48
++                    width: clockRow.width
++                    horizontalAlignment: Text.AlignHCenter
++                    text: {
++                        var h = timeText.hour24
++                        var prefix = (h >= 23 || h < 6) ? "Good night, " : h < 12 ? "Good morning, " : h < 17 ? "Good afternoon, " : "Good evening, "
++                        var name = appSettings.greeterName || ""
++                        if (name === "") return prefix.slice(0, -2)
++                        return prefix + name
++                    }
++                    font.pixelSize: 44
++                    font.family: headerFont()
++                    font.weight: Font.Bold
++                    color: (appSettings.constellationTintFromApp && root.main && root.main.selectedTint)
++                        ? root.main.selectedTint : "#cba6f7"
++                    Behavior on color { ColorAnimation { duration: 400 } }
++                    elide: Text.ElideRight
 +                }
 +            }
 +
@@ -312,27 +335,10 @@ index f5b4c15..55f93a0 100755
 +                width: parent.width
 +                horizontalAlignment: Text.AlignRight
 +                text: Qt.formatDate(timeText.now, "MMM d")
-+                font.pixelSize: 40
++                font.pixelSize: 88
 +                font.family: headerFont()
 +                font.weight: Font.Bold
 +                color: "#cdd6f4"
-+            }
-+
-+            // Greeting
-+            Text {
-+                width: parent.width
-+                horizontalAlignment: Text.AlignRight
-+                text: {
-+                    var h = timeText.hour24
-+                    var prefix = (h >= 23 || h < 6) ? "Good night, " : h < 12 ? "Good morning, " : h < 17 ? "Good afternoon, " : "Good evening, "
-+                    var name = appSettings.greeterName || ""
-+                    if (name === "") return prefix.slice(0, -2)
-+                    return prefix + name
-+                }
-+                font.pixelSize: 20
-+                font.family: bodyFont()
-+                font.weight: Font.Normal
-+                color: "#cba6f7"
 +            }
 +
 +            // Current conditions, right-aligned
@@ -362,7 +368,9 @@ index f5b4c15..55f93a0 100755
 +                    Text {
 +                        anchors.baseline: tempText.baseline
 +                        font.pixelSize: 20
-+                        color: "#cba6f7"
++                        color: (appSettings.constellationTintFromApp && root.main && root.main.selectedTint)
++                            ? root.main.selectedTint : "#cba6f7"
++                        Behavior on color { ColorAnimation { duration: 400 } }
 +                        font.family: bodyFont()
 +                        font.weight: Font.Normal
 +                        text: weatherWidget.describe(weatherWidget.condition)
