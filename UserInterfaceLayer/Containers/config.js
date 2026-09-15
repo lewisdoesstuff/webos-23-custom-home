@@ -66,7 +66,7 @@ var constellation = {
 var tintChoices = [
     "",          // Default
     "#89b4fa",   // Blue
-    "#a6e1a1",   // Green
+    "#a6e3a1",   // Green
     "#f38ba8",   // Red
     "#f9e2af",   // Yellow
     "#cba6f7",   // Mauve
